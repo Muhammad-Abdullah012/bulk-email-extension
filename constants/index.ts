@@ -1,0 +1,4 @@
+export const ACTION = {
+  FORM_SUBMITTED: "FORM_SUBMITTED",
+  ERROR: "ERROR"
+};
