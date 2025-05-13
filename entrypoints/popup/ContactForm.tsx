@@ -5,12 +5,13 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import {storage} from "#imports"
 import {
   PlusIcon,
   TrashIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
-import { ACTION } from "@/constants";
+import { ACTION, STORAGE_KEYS } from "@/constants";
 
 export interface Contact {
   id: string;
@@ -136,7 +137,6 @@ const ContactForm: React.FC = () => {
       });
       setSubmitStatus("success");
       setContacts([{ id: generateId(), name: "", email: "" }]);
-      setMessage("");
       setErrors({});
     } catch (err) {
       setSubmitStatus("error");
@@ -147,6 +147,12 @@ const ContactForm: React.FC = () => {
   };
 
   useEffect(() => {
+    (async () => {
+      const template = await storage.getItem(`local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`) as string;
+      setMessage(template);
+      const csvData = await storage.getItem(`local:${STORAGE_KEYS.CSV_CONTACTS}`) as Contact[];
+      setContacts(csvData);
+    })();
     const listener = (
       message: any,
       sender: Browser.runtime.MessageSender,
@@ -162,16 +168,23 @@ const ContactForm: React.FC = () => {
     return () => browser.runtime.onMessage.removeListener(listener);
   }, []);
 
+  const openOptionsPage = () => {
+    browser.runtime.openOptionsPage();
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
       className="bg-slate-800 shadow-2xl rounded-lg p-6 md:p-8 space-y-6"
       noValidate
     >
-      <h2 className="text-2xl font-semibold text-sky-400 mb-6 border-b border-slate-700 pb-4">
-        Contact Entries
-      </h2>
-
+      <button
+        type="button"
+        onClick={openOptionsPage}
+        className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Upload CSV file
+      </button>
       {contacts.map((contact, index) => (
         <div
           key={contact.id}

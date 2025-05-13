@@ -5,7 +5,7 @@ export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   entrypointsDir: "entrypoints",
   manifest: {
-    permissions: ["tabs"],
+    permissions: ["tabs", "storage"],
     web_accessible_resources: [
       {
         resources: ["/outlook.json"],
