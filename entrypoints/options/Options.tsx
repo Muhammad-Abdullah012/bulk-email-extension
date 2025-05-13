@@ -350,7 +350,7 @@ function OptionsPage() {
           />
           <button
             onClick={handleSaveMessageTemplate}
-            disabled={isLoadingMessage || !messageTemplate.trim()}
+            disabled={isLoadingMessage || !messageTemplate?.trim()}
             className="mt-4 w-full flex items-center justify-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {isLoadingMessage ? (
