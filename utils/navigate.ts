@@ -19,8 +19,27 @@ export const navigateCurrentTab = async (newUrl: string) => {
 
       if (!shouldNavigate) return;
 
-      await browser.tabs.update(currentTabId, { url: newUrl });
-      console.log(`Tab ${currentTabId} navigated to ${newUrl}`);
+      return new Promise((resolve) => {
+        const listener = (
+          updatedTabId: number,
+          changeInfo: Browser.tabs.TabChangeInfo,
+          tab: Browser.tabs.Tab
+        ) => {
+          if (
+            updatedTabId === currentTabId &&
+            changeInfo.status === "complete"
+          ) {
+            if (browser.tabs.onUpdated.hasListener(listener)) {
+              browser.tabs.onUpdated.removeListener(listener);
+            }
+            resolve(true);
+          }
+        };
+
+        browser.tabs.onUpdated.addListener(listener);
+        browser.tabs.update(currentTabId, { url: newUrl }).catch(console.error);
+        console.log(`Tab ${currentTabId} navigated to ${newUrl}`);
+      });
     } else {
       console.warn("No active tab found in the current window.");
     }
@@ -51,7 +70,15 @@ export const getCurrentTabUrl = async () => {
 
 export const navigationRequired = async (targetUrl: string) => {
   const currentUrlString = await getCurrentTabUrl();
+  console.log("current Tab url: ", currentUrlString);
   if (currentUrlString) {
+    if (!currentUrlString.startsWith("http")) {
+      console.log(
+        `Current URL (${currentUrlString}) is not HTTP/HTTPS, navigation is required.`
+      );
+      return true;
+    }
+
     const currentDomain = new URL(currentUrlString).hostname.toLowerCase();
     const targetDomain = new URL(targetUrl).hostname.toLowerCase();
     return currentDomain !== targetDomain;

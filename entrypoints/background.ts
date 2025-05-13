@@ -17,6 +17,7 @@ export default defineBackground(() => {
           .then(() => delay(2000))
           .then(() => navigationRequired(urlToNavigate))
           .then((navigationRequired) => {
+            console.log("navigationRequired => ", navigationRequired);
             if (navigationRequired) {
               browser.runtime.sendMessage({
                 type: ACTION.ERROR,
@@ -24,7 +25,7 @@ export default defineBackground(() => {
               }).catch(console.error);
               return;
             }
-            sendMessageToCurrentTab(message);
+            sendMessageToCurrentTab(message).catch(console.error);
           })
           .catch(console.error);
       })

@@ -124,6 +124,7 @@ export const sendEmailViaDOM = async (
         console.log("Email send sequence initiated successfully via DOM.");
     } catch (error) {
         console.error("Error during email DOM manipulation:", error);
+        throw error;
     }
 };
 
@@ -131,7 +132,6 @@ export const sendEmailViaDOM = async (
 
 export const sendEmailsToContacts = async (
     data: EmailInputData,
-    subject: string,
     delayBetweenEmailsMs: number,
     options: { timeoutPerStep?: number } = {}
 ): Promise<void> => {
