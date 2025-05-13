@@ -163,12 +163,12 @@ export const sendEmailsToContacts = async (
       console.log(`Successfully initiated email send for ${contact.email}.`);
     } catch (error) {
       console.error(
-        `Failed to send email to ${contact.email}. Continuing to next contact.`
+        `Failed to send email to ${contact.email}. Due to error: ${error}\n Continuing to next contact.`
       );
       browser.runtime
         .sendMessage({
           type: ACTION.ERROR,
-          payload: `Failed to send email to ${contact.email}. Continuing to next contact.`,
+          payload: `Failed to send email to ${contact.email}.`,
         })
         .catch(console.error);
     }

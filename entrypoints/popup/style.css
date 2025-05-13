@@ -255,6 +255,9 @@
   .w-5 {
     width: calc(var(--spacing) * 5);
   }
+  .w-\[400px\] {
+    width: 400px;
+  }
   .w-full {
     width: 100%;
   }

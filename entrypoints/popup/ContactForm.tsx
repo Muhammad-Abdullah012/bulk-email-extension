@@ -152,6 +152,7 @@ const ContactForm: React.FC = () => {
       sender: Browser.runtime.MessageSender,
       sendResponse: any
     ) => {
+      console.log("ContactForm.tsx::message => ", message);
       if (message.type === ACTION.ERROR) {
         setErrorMessage(message.payload);
       }
@@ -266,7 +267,7 @@ const ContactForm: React.FC = () => {
           className="p-3 mb-4 text-sm text-red-300 bg-red-500/20 rounded-md"
           role="alert"
         >
-          There was an error submitting your form. Please try again.
+          {errorMessage}
         </div>
       ) : (
         <></>
