@@ -1,3 +1,10 @@
 {
-    "url": "https://outlook.live.com/mail/0/"
+  "url": "https://outlook.live.com/mail/0/",
+  "selectors": {
+    "new_email": "button[aria-label*='New mail']",
+    "to": "div[role='textbox'][aria-label*='To']",
+    "subject": "input[type='text'][aria-label*='Subject']",
+    "email_body": "div[role='textbox'][aria-label*='Message body']",
+    "send_button": "button[aria-label*='Send']"
+  }
 }
