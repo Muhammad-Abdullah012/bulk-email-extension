@@ -13,8 +13,7 @@
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
-    "tailwindcss:popup": "npx @tailwindcss/cli -i ./public/input.css -o ./entrypoints/popup/style.css",
-    "tailwindcss:options": "npx @tailwindcss/cli -i ./public/input.css -o ./entrypoints/options/style.css"
+    "tailwindcss": "npx @tailwindcss/cli -i ./public/input.css -o ./assets/style.css"
   },
   "devDependencies": {
     "@heroicons/react": "^2.2.0",

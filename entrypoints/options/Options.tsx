@@ -39,11 +39,11 @@ function OptionsPage() {
         const result = (await storage.getItem(
           `local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`
         )) as string;
-        setMessageTemplate(result);
+        if (result) setMessageTemplate(result);
         const csv = (await storage.getItem(
           `local:${STORAGE_KEYS.CSV_CONTACTS}`
         )) as Contact[];
-        if (csv) setContactsCount(csv.length);
+        if (csv && csv.length) setContactsCount(csv.length);
       } catch (error) {
         console.error("Error loading data from storage:", error);
         setCsvFeedback({

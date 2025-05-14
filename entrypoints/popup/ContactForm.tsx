@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import {storage} from "#imports"
+import { storage } from "#imports";
 import {
   PlusIcon,
   TrashIcon,
@@ -148,10 +148,14 @@ const ContactForm: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const template = await storage.getItem(`local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`) as string;
-      setMessage(template);
-      const csvData = await storage.getItem(`local:${STORAGE_KEYS.CSV_CONTACTS}`) as Contact[];
-      setContacts(csvData);
+      const template = (await storage.getItem(
+        `local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`
+      )) as string;
+      if (template) setMessage(template);
+      const csvData = (await storage.getItem(
+        `local:${STORAGE_KEYS.CSV_CONTACTS}`
+      )) as Contact[];
+      if (csvData) setContacts(csvData);
     })();
     const listener = (
       message: any,
