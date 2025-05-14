@@ -180,6 +180,7 @@ function OptionsPage() {
               `local:${STORAGE_KEYS.CSV_CONTACTS}`,
               parsedContacts
             );
+            setContactsCount(parsedContacts.length);
             browser.runtime
               .sendMessage({
                 action: ACTION.CSV_DATA_PARSED,
