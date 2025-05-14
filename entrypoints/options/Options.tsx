@@ -12,6 +12,7 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { ACTION, STORAGE_KEYS } from "@/constants";
 import type { Contact } from "@/entrypoints/popup/ContactForm";
@@ -29,6 +30,7 @@ function OptionsPage() {
   const [isLoadingCsv, setIsLoadingCsv] = useState<boolean>(false);
   const [isLoadingMessage, setIsLoadingMessage] = useState<boolean>(false);
   const [contactsCount, setContactsCount] = useState<number>(0);
+  const [title, setTitle] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,14 +38,20 @@ function OptionsPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const result = (await storage.getItem(
-          `local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`
-        )) as string;
-        if (result) setMessageTemplate(result);
-        const csv = (await storage.getItem(
-          `local:${STORAGE_KEYS.CSV_CONTACTS}`
-        )) as Contact[];
+        const [template, csv, settings] = await Promise.all([
+          storage.getItem(
+            `local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`
+          ) as Promise<string>,
+          storage.getItem(`local:${STORAGE_KEYS.CSV_CONTACTS}`) as Promise<
+            Contact[]
+          >,
+          fetch(browser.runtime.getURL("/settings.json")).then((res) =>
+            res.json()
+          ),
+        ]);
+        if (template) setMessageTemplate(template);
         if (csv && csv.length) setContactsCount(csv.length);
+        if (settings.title) setTitle(settings.title);
       } catch (error) {
         console.error("Error loading data from storage:", error);
         setCsvFeedback({
@@ -262,9 +270,6 @@ function OptionsPage() {
           <h1 className="text-4xl font-bold text-sky-400">
             Extension Settings
           </h1>
-          <p className="text-slate-400 mt-2">
-            Manage your bulk email preferences.
-          </p>
         </header>
 
         {/* Contacts Section */}
@@ -320,17 +325,26 @@ function OptionsPage() {
               </div>
             )}
           </div>
-          <p>
-            Stored contacts:{" "}
-            <span className="font-medium text-sky-400">{contactsCount}</span>
-          </p>
-          <button
-            onClick={clearContacts}
-            className="text-xs text-red-400 hover:text-red-300 hover:underline"
-            disabled={isLoadingCsv}
-          >
-            Clear Stored Contacts
-          </button>
+          <div className="flex flex-row py-6 items-center justify-between">
+            {contactsCount <= 0 ? (
+              <p className="text-sm text-slate-400">No contacts stored</p>
+            ) : (
+              <p className="text-sm text-slate-400">
+                Stored contacts:{" "}
+                <span className="font-medium text-sky-400">
+                  {contactsCount}
+                </span>
+              </p>
+            )}
+            <button
+              onClick={clearContacts}
+              className="text-xs text-red-400 hover:text-red-300 cursor-pointer px-4 py-3 border-2 border-solid rounded-md flex flex-row gap-4 items-center"
+              disabled={isLoadingCsv}
+            >
+              <TrashIcon className="h-5 w-5" />
+              <span>Clear Contacts</span>
+            </button>
+          </div>
         </section>
 
         {/* Message Template Section */}
@@ -398,7 +412,9 @@ function OptionsPage() {
         </section>
 
         <footer className="text-center text-sm text-slate-500 pt-8">
-          <p>&copy; {new Date().getFullYear()} Email Automation. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} {title}. All rights reserved.
+          </p>
         </footer>
       </div>
     </div>
