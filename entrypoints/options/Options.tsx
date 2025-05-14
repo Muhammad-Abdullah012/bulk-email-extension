@@ -3,7 +3,6 @@ import React, {
   ChangeEvent,
   useRef,
   useEffect,
-  useCallback,
 } from "react";
 import Papa from "papaparse";
 import { storage } from "#imports";
@@ -13,9 +12,12 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   TrashIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import { ACTION, STORAGE_KEYS } from "@/constants";
 import type { Contact } from "@/entrypoints/popup/ContactForm";
+
+type ActiveTab = "contacts" | "template";
 
 function OptionsPage() {
   const [messageTemplate, setMessageTemplate] = useState<string>("");
@@ -31,6 +33,7 @@ function OptionsPage() {
   const [isLoadingMessage, setIsLoadingMessage] = useState<boolean>(false);
   const [contactsCount, setContactsCount] = useState<number>(0);
   const [title, setTitle] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("contacts");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,9 +44,9 @@ function OptionsPage() {
         const [template, csv, settings] = await Promise.all([
           storage.getItem(
             `local:${STORAGE_KEYS.MESSAGE_TEMPLATE}`
-          ) as Promise<string>,
+          ) as Promise<string | null>,
           storage.getItem(`local:${STORAGE_KEYS.CSV_CONTACTS}`) as Promise<
-            Contact[]
+            Contact[] | null
           >,
           fetch(browser.runtime.getURL("/settings.json")).then((res) =>
             res.json()
@@ -65,7 +68,7 @@ function OptionsPage() {
 
   const handleMessageTemplateChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setMessageTemplate(e.target.value);
-    if (messageSaveFeedback) setMessageSaveFeedback(null); // Clear feedback on change
+    if (messageSaveFeedback) setMessageSaveFeedback(null);
   };
 
   const handleSaveMessageTemplate = async () => {
@@ -147,7 +150,7 @@ function OptionsPage() {
             return undefined;
           };
 
-          const actualHeaders = Object.keys(results.data[0]).map((h) =>
+          const actualHeadersInFile = Object.keys(results.data[0]).map((h) =>
             h.toLowerCase().trim()
           );
           const nameHeaderInFile = findHeader(
@@ -160,7 +163,6 @@ function OptionsPage() {
           );
 
           if (!emailHeaderInFile) {
-            // Email is mandatory
             parseErrorMsg +=
               "CSV must contain an 'email' column (or similar variations like 'Email Address'). ";
           } else {
@@ -169,7 +171,7 @@ function OptionsPage() {
               let name = nameHeaderInFile ? row[nameHeaderInFile]?.trim() : "";
 
               if (email) {
-                if (!name) name = email.split("@")[0]; // Use part of email if name is missing
+                if (!name) name = email.split("@")[0];
                 parsedContacts.push({
                   id: `csv_${Date.now()}_${index}`,
                   name,
@@ -225,7 +227,7 @@ function OptionsPage() {
         }
 
         if (fileInputRef.current) {
-          fileInputRef.current.value = ""; // Reset file input
+          fileInputRef.current.value = "";
         }
         setIsLoadingCsv(false);
       },
@@ -258,158 +260,193 @@ function OptionsPage() {
         message: "Stored contacts have been cleared.",
       });
     } catch (error) {
-      console.error(error);
+      console.error("Error clearing contacts:", error);
       setCsvFeedback({ type: "error", message: "Failed to clear contacts." });
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 flex justify-center">
-      <div className="w-full max-w-2xl space-y-10">
+      <div className="w-full max-w-2xl space-y-8">
         <header className="text-center">
           <h1 className="text-4xl font-bold text-sky-400">
             Extension Settings
           </h1>
         </header>
 
-        {/* Contacts Section */}
-        <section className="bg-slate-800 shadow-xl rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-sky-500 mb-1">
-            Manage Contacts
-          </h2>
-          <p className="text-sm text-slate-400 mb-6">
-            Upload a CSV file with contact details. Required column: "email".
-            Optional: "name".
-          </p>
-
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="csv-upload"
-                className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer transition-colors
-                            ${
-                              isLoadingCsv
-                                ? "border-slate-600 text-slate-500 bg-slate-700 cursor-not-allowed"
-                                : "border-sky-600 text-sky-400 hover:bg-sky-700/30 hover:border-sky-500"
-                            }`}
-              >
-                <ArrowUpTrayIcon className="h-6 w-6 mr-2" />
-                <span>
-                  {isLoadingCsv ? "Processing..." : "Choose CSV File"}
-                </span>
-              </label>
-              <input
-                type="file"
-                id="csv-upload"
-                accept=".csv"
-                onChange={handleFileUpload}
-                ref={fileInputRef}
-                className="hidden"
-                disabled={isLoadingCsv}
-              />
-            </div>
-
-            {csvFeedback && (
-              <div
-                className={`flex items-center p-3 rounded-md text-sm bg-opacity-20
-                ${
-                  csvFeedback.type === "success"
-                    ? "bg-green-500 text-green-300"
-                    : csvFeedback.type === "error"
-                    ? "bg-red-500 text-red-300"
-                    : "bg-sky-500 text-sky-300"
-                }`}
-              >
-                {renderFeedbackIcon(csvFeedback.type)}
-                <span>{csvFeedback.message}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-row py-6 items-center justify-between">
-            {contactsCount <= 0 ? (
-              <p className="text-sm text-slate-400">No contacts stored</p>
-            ) : (
-              <p className="text-sm text-slate-400">
-                Stored contacts:{" "}
-                <span className="font-medium text-sky-400">
-                  {contactsCount}
-                </span>
-              </p>
-            )}
-            <button
-              onClick={clearContacts}
-              className="text-xs text-red-400 hover:text-red-300 cursor-pointer px-4 py-3 border-2 border-solid rounded-md flex flex-row gap-4 items-center"
-              disabled={isLoadingCsv}
-            >
-              <TrashIcon className="h-5 w-5" />
-              <span>Clear Contacts</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Message Template Section */}
-        <section className="bg-slate-800 shadow-xl rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-sky-500 mb-1">
-            Email Message Template
-          </h2>
-          <p className="text-sm text-slate-400 mb-6">
-            Compose your default email message.
-          </p>
-          <textarea
-            rows={8}
-            value={messageTemplate}
-            onChange={handleMessageTemplateChange}
-            placeholder="Hello! We're excited to share...Best regards, Your Team"
-            className="w-full p-3 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 placeholder-slate-500 text-slate-100 resize-y"
-            disabled={isLoadingMessage}
-          />
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-700">
           <button
-            onClick={handleSaveMessageTemplate}
-            disabled={isLoadingMessage || !messageTemplate?.trim()}
-            className="mt-4 w-full flex items-center justify-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoadingMessage ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  ></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              "Save Message Template"
-            )}
-          </button>
-          {messageSaveFeedback && (
-            <div
-              className={`flex items-center mt-3 p-3 rounded-md text-sm bg-opacity-20
+            type="button"
+            onClick={() => setActiveTab("contacts")}
+            className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors cursor-pointer
               ${
-                messageSaveFeedback.type === "success"
-                  ? "bg-green-500 text-green-300"
-                  : "bg-red-500 text-red-300"
+                activeTab === "contacts"
+                  ? "border-b-2 border-sky-500 text-sky-400"
+                  : "text-slate-400 hover:text-sky-400 hover:bg-slate-700/50"
               }`}
-            >
-              {renderFeedbackIcon(messageSaveFeedback.type)}
-              <span>{messageSaveFeedback.message}</span>
-            </div>
+          >
+            <ArrowUpTrayIcon className="h-5 w-5" />
+            <span>Manage Contacts</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("template")}
+            className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors cursor-pointer
+              ${
+                activeTab === "template"
+                  ? "border-b-2 border-sky-500 text-sky-400"
+                  : "text-slate-400 hover:text-sky-400 hover:bg-slate-700/50"
+              }`}
+          >
+            <PencilSquareIcon className="h-5 w-5" />
+            <span>Message Template</span>
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="pt-6"> {/* Added padding top for content below tabs */}
+          {activeTab === "contacts" && (
+            <section className="bg-slate-800 shadow-xl rounded-lg p-6 animate-fadeIn">
+              <h2 className="text-2xl font-semibold text-sky-500 mb-1">
+                Upload Contacts
+              </h2>
+              <p className="text-sm text-slate-400 mb-6">
+                Upload a CSV file with contact details. Required column: "email".
+                Optional: "name".
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="csv-upload"
+                    className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed rounded-md cursor-pointer transition-colors
+                                ${
+                                  isLoadingCsv
+                                    ? "border-slate-600 text-slate-500 bg-slate-700 cursor-not-allowed"
+                                    : "border-sky-600 text-sky-400 hover:bg-sky-700/30 hover:border-sky-500"
+                                }`}
+                  >
+                    <ArrowUpTrayIcon className="h-6 w-6 mr-2" />
+                    <span>
+                      {isLoadingCsv ? "Processing..." : "Choose CSV File"}
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    id="csv-upload"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    ref={fileInputRef}
+                    className="hidden"
+                    disabled={isLoadingCsv}
+                  />
+                </div>
+
+                {csvFeedback && (
+                  <div
+                    className={`flex items-center p-3 rounded-md text-sm bg-opacity-20
+                    ${
+                      csvFeedback.type === "success"
+                        ? "bg-green-500 text-green-300"
+                        : csvFeedback.type === "error"
+                        ? "bg-red-500 text-red-300"
+                        : "bg-sky-500 text-sky-300"
+                    }`}
+                  >
+                    {renderFeedbackIcon(csvFeedback.type)}
+                    <span>{csvFeedback.message}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row py-6 items-center justify-between gap-4">
+                {contactsCount <= 0 ? (
+                  <p className="text-sm text-slate-400">No contacts stored</p>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    Stored contacts:{" "}
+                    <span className="font-medium text-sky-400">
+                      {contactsCount}
+                    </span>
+                  </p>
+                )}
+                <button
+                  onClick={clearContacts}
+                  className="w-full sm:w-auto text-xs text-red-400 hover:text-red-300 cursor-pointer px-4 py-3 border-2 border-red-500/50 hover:border-red-500 rounded-md flex flex-row gap-2 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:border-slate-600 disabled:text-slate-500"
+                  disabled={isLoadingCsv || contactsCount === 0}
+                >
+                  <TrashIcon className="h-5 w-5" />
+                  <span>Clear Contacts</span>
+                </button>
+              </div>
+            </section>
           )}
-        </section>
+
+          {activeTab === "template" && (
+            <section className="bg-slate-800 shadow-xl rounded-lg p-6 animate-fadeIn">
+              <h2 className="text-2xl font-semibold text-sky-500 mb-1">
+                Email Message Template
+              </h2>
+              <p className="text-sm text-slate-400 mb-6">
+                Compose your default email message.
+              </p>
+              <textarea
+                rows={8}
+                value={messageTemplate}
+                onChange={handleMessageTemplateChange}
+                placeholder="Hello! We're excited to share...Best regards, Your Team"
+                className="w-full p-3 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 placeholder-slate-500 text-slate-100 resize-y"
+                disabled={isLoadingMessage}
+              />
+              <button
+                onClick={handleSaveMessageTemplate}
+                disabled={isLoadingMessage || !messageTemplate?.trim()}
+                className="mt-4 w-full flex items-center justify-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoadingMessage ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      ></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  "Save Message Template"
+                )}
+              </button>
+              {messageSaveFeedback && (
+                <div
+                  className={`flex items-center mt-3 p-3 rounded-md text-sm bg-opacity-20
+                  ${
+                    messageSaveFeedback.type === "success"
+                      ? "bg-green-500 text-green-300"
+                      : "bg-red-500 text-red-300"
+                  }`}
+                >
+                  {renderFeedbackIcon(messageSaveFeedback.type)}
+                  <span>{messageSaveFeedback.message}</span>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
 
         <footer className="text-center text-sm text-slate-500 pt-8">
           <p>

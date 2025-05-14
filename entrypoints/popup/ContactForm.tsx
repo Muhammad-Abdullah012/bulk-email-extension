@@ -22,7 +22,7 @@ export interface Contact {
 }
 
 type Errors = Record<string, string | null>;
-type Tab = "contacts" | "message";
+type ActiveTab = "contacts" | "message";
 
 const generateId = (): string =>
   `id_${Math.random().toString(36).substring(2, 9)}`;
@@ -38,7 +38,7 @@ const ContactForm: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(
     null
   );
-  const [activeTab, setActiveTab] = useState<Tab>(
+  const [activeTab, setActiveTab] = useState<ActiveTab>(
     "contacts"
   );
 
@@ -215,7 +215,7 @@ const ContactForm: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("contacts")}
-          className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors
+          className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors cursor-pointer
             ${
               activeTab === "contacts"
                 ? "border-b-2 border-sky-500 text-sky-400"
@@ -228,7 +228,7 @@ const ContactForm: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab("message")}
-          className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors
+          className={`flex items-center justify-center space-x-2 px-4 py-3 w-1/2 font-medium text-sm focus:outline-none transition-colors cursor-pointer
             ${
               activeTab === "message"
                 ? "border-b-2 border-sky-500 text-sky-400"
