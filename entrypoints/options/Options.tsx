@@ -398,7 +398,7 @@ function OptionsPage() {
         </section>
 
         <footer className="text-center text-sm text-slate-500 pt-8">
-          <p>© {new Date().getFullYear()} AliSquare. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Email Automation. All rights reserved.</p>
         </footer>
       </div>
     </div>
