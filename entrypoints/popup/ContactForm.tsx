@@ -14,12 +14,7 @@ import {
   EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { ACTION, STORAGE_KEYS } from "@/constants";
-
-export interface Contact {
-  id: string;
-  name: string;
-  email: string;
-}
+import { Contact, EmailInputData } from "@/interfaces";
 
 type Errors = Record<string, string | null>;
 type ActiveTab = "contacts" | "message";
@@ -146,7 +141,7 @@ const ContactForm: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const formData = {
+    const formData: EmailInputData = {
       contacts,
       message,
     };

@@ -1,10 +1,10 @@
 {
   "url": "https://outlook.live.com/mail/0/",
-  "selectors": {
-    "new_email": "button[aria-label*='New mail']",
-    "to": "div[role='textbox'][aria-label*='To']",
-    "subject": "input[type='text'][aria-label*='Subject']",
-    "email_body": "div[role='textbox'][aria-label*='Message body']",
-    "send_button": "button[aria-label*='Send']"
+  "elements": {
+    "new_email": "document.querySelector(\"button[aria-label*='New mail']\");",
+    "to": "document.querySelector(\"div[role='textbox'][aria-label*='To']\");",
+    "subject": "document.querySelector(\"input[type='text'][aria-label*='Subject']\");",
+    "email_body": "document.querySelector(\"div[role='textbox'][aria-label*='Message body']\");",
+    "send_button": "document.querySelector(\"button[aria-label*='Send']\");"
   }
 }

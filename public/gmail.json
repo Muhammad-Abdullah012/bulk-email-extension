@@ -1,0 +1,10 @@
+{
+  "url": "https://mail.google.com/mail/u/0/",
+  "elements": {
+    "new_email": "[...document.querySelectorAll('div[role=\"button\"]')].find(el => el.textContent.trim().toLowerCase() === 'compose');",
+    "to": "document.querySelector(\"input[aria-label*='To recipients']\");",
+    "subject": "document.querySelector(\"input[aria-label*='Subject']\");",
+    "email_body": "document.querySelector(\"div[role='textbox'][aria-label*='Message Body']\");",
+    "send_button": "document.querySelector(\"div[role='button'][aria-label*='Send']\");"
+  }
+}

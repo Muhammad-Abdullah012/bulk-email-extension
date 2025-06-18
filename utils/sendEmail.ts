@@ -1,10 +1,5 @@
 import { ACTION } from "@/constants";
-import { Contact } from "@/entrypoints/popup/ContactForm";
-
-interface EmailInputData {
-  contacts: Contact[];
-  message: string;
-}
+import { EmailInputData } from "@/interfaces";
 
 export const waitForElement = (
   selector: string,
@@ -13,7 +8,7 @@ export const waitForElement = (
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     const interval = setInterval(() => {
-      const element = document.querySelector<HTMLElement>(selector);
+      const element = eval(selector);
       if (element) {
         clearInterval(interval);
         resolve(element);
