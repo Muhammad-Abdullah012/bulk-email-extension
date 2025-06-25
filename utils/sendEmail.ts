@@ -8,7 +8,7 @@ export const waitForElement = (
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     const interval = setInterval(() => {
-      const element = eval(selector);
+      const element = new Function('return ' + selector)();
       if (element) {
         clearInterval(interval);
         resolve(element);
@@ -46,12 +46,12 @@ export const sendEmailViaDOM = async (
     const jsonUrl = browser.runtime.getURL("/outlook.json");
     const response = await fetch(jsonUrl);
     const outlook = await response.json();
-    // Extract html selectors from json
-    const { selectors } = outlook;
+    // Extract html elements from json
+    const { elements } = outlook;
     // 1. Click "New mail" button
     console.log("Looking for 'New mail' button...");
     const newMailButton = await waitForElement(
-      selectors.new_email,
+      elements.new_email,
       timeoutPerStep
     );
     console.log("Found 'New mail' button, clicking...");
@@ -61,7 +61,7 @@ export const sendEmailViaDOM = async (
 
     // 2. Fill "To" field
     console.log("Looking for 'To' field...");
-    const toField = await waitForElement(selectors.to, timeoutPerStep);
+    const toField = await waitForElement(elements.to, timeoutPerStep);
     console.log("Found 'To' field, setting value...");
     toField.focus(); // Focus might be needed
     // For contenteditable divs, setting innerText is common
@@ -77,7 +77,7 @@ export const sendEmailViaDOM = async (
     console.log("Looking for 'Subject' field...");
     // Subject is often an input element
     const subjectField = (await waitForElement(
-      selectors.subject,
+      elements.subject,
       timeoutPerStep
     )) as HTMLInputElement;
     console.log("Found 'Subject' field, setting value...");
@@ -96,7 +96,7 @@ export const sendEmailViaDOM = async (
     console.log("Looking for 'Body' field...");
     // Using attribute contains selector '*' as specified
     const bodyField = await waitForElement(
-      selectors.email_body,
+      elements.email_body,
       timeoutPerStep
     );
     console.log("Found 'Body' field, setting value...");
@@ -112,7 +112,7 @@ export const sendEmailViaDOM = async (
     // 5. Click "Send" button
     console.log("Looking for 'Send' button...");
     const sendButton = await waitForElement(
-      selectors.send_button,
+      elements.send_button,
       timeoutPerStep
     );
     console.log("Found 'Send' button, clicking...");
